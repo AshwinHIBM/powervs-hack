@@ -241,7 +241,7 @@ SSH_KEY=$(cat ~/.ssh/id_installer_rsa.pub)
 # perl -pi -e 'chomp if eof' < ~/.pullSecretCompact | xclip -i -selection clipboard
 #
 PULL_SECRET=$(cat ~/.pullSecret)
-
+while [[ 1 == 1 ]]; do
 #openshift-install create install-config --dir ${CLUSTER_DIR} --log-level=debug
 #exit 0
 
@@ -530,6 +530,25 @@ then
 	fi
 fi
 
+if [[ ${DEPLOYMENT_SUCCESS} == "success" ]]; then
+	echo "Cluster creation successful. Destroying the cluster"
+	openshift-install destroy cluster --dir ${CLUSTER_DIR} --log-level=debug
+	if [[ $? != 0 ]]; then
+		echo "Failed to destroy cluster."
+		exit 2
+	else
+		echo "Cluster destroyed successfully. Redeploying a cluster in a minute"
+		rm -rf ${CLUSTER_DIR}
+		mkdir -p ${CLUSTER_DIR}
+		sleep 60
+	fi
+else
+	echo "Failed to create cluster."
+	echo "Use kubeconfig from ${CLUSTER_DIR}/auth/kubeconfig for more debugging."
+	exit 1
+fi
+done
+exit 1
 JENKINS_FILE=$(mktemp)
 trap "/bin/rm ${JENKINS_FILE}" EXIT
 
